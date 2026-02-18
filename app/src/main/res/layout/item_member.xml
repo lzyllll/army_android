@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:paddingVertical="12dp"
+    android:paddingHorizontal="4dp">
+
+    <!-- Player Column (Weight 1.5) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.5"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp">
+
+        <!-- Avatar -->
+        <FrameLayout
+            android:layout_width="32dp"
+            android:layout_height="32dp">
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_circle_avatar"/>
+             <TextView
+                android:id="@+id/tvAvatar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="S"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/ios_blue"/>
+        </FrameLayout>
+
+        <!-- Name Only -->
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="PlayerName"
+            android:textSize="13sp"
+            android:textColor="#111827"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:singleLine="true"/>
+    </LinearLayout>
+
+    <!-- Daily (Weight 1) -->
+    <TextView
+        android:id="@+id/tvConDay"
+        android:text="1200"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:textColor="@color/ios_green" />
+        
+    <!-- Weekly (Weight 1) -->
+    <TextView
+        android:id="@+id/tvConWeek"
+        android:text="8400"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:textColor="#374151"/>
+
+    <!-- Last Week (Weight 1) -->
+    <TextView
+        android:id="@+id/tvConLastWeek"
+        android:text="0"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:textColor="#6B7280"/>
+
+    <!-- 2 Weeks Ago (Weight 1) -->
+    <TextView
+        android:id="@+id/tvConBeforeLastWeek"
+        android:text="0"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:textColor="#9CA3AF"
+        android:paddingEnd="8dp"/>
+
+</LinearLayout>
