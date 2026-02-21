@@ -190,11 +190,53 @@ public class GameUser {
     /**
      * 审核申请成员
      */
-    public void auditApplyMember(int targetUid, int targetIndex, boolean approve) throws TException {
+    public void auditApplyMember(String targetUid, int targetIndex, boolean approve) throws TException {
         try (MasterApiClient client = new MasterApiClient(cookies)) {
             Normal normal = client.buildNormal(archIndex);
-            client.getClient().applyAudit(normal, targetUid, String.valueOf(targetIndex), approve ? 1 : 0);
+            client.getClient().applyAudit(normal, (int) Long.parseLong(targetUid), String.valueOf(targetIndex),
+                    approve ? 1 : 0);
         }
+    }
+
+    /**
+     * 审核目标
+     */
+    public static class AuditTarget {
+        public final String uid;
+        public final int index;
+
+        public AuditTarget(String uid, int index) {
+            this.uid = uid;
+            this.index = index;
+        }
+    }
+
+    /**
+     * 批量审核申请成员（复用单个连接）
+     *
+     * @param targets 待审核目标列表（uid + index）
+     * @param approve true=通过, false=拒绝
+     * @return 成功审核的数量
+     */
+    public int auditApplyMembers(List<AuditTarget> targets, boolean approve) throws TException {
+        int successCount = 0;
+        TException lastError = null;
+        try (MasterApiClient client = new MasterApiClient(cookies)) {
+            Normal normal = client.buildNormal(archIndex);
+            for (AuditTarget target : targets) {
+                try {
+                    int uid = (int) Long.parseLong(target.uid);
+                    client.getClient().applyAudit(normal, uid, String.valueOf(target.index), approve ? 1 : 0);
+                    successCount++;
+                } catch (TException e) {
+                    lastError = e;
+                }
+            }
+        }
+        if (successCount == 0 && lastError != null) {
+            throw lastError;
+        }
+        return successCount;
     }
 
     /**
@@ -209,7 +251,7 @@ public class GameUser {
     }
 
     /**
-     * 设置成员角色
+     * 设置成员角色 uid 可以为无符号的，待修改
      */
     public void setMemberRole(int targetUid, int targetIndex, int roleId) throws TException {
         try (MemberApiClient client = new MemberApiClient(cookies)) {
@@ -368,7 +410,8 @@ public class GameUser {
         // 日贡日志添加，日贡1100，并设置为1100
         ParsedMember me = getUnionAndMe().member;
         me.detail.conDay = 1100;
-        me.detail.loginTime = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date());
+        me.detail.loginTime = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                .format(new java.util.Date());
         setSelfExtra(me.detail.toExtra());
         return "执行成功: " + log.toString();
     }

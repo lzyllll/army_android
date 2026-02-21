@@ -417,25 +417,53 @@ public class AccountManager {
     }
 
     /**
-     * 审核申请
+     * 审核回调
+     */
+    public interface AuditCallback {
+        void onComplete(int successCount, String errorMessage);
+    }
+
+    /**
+     * 审核申请（使用批量方法，复用单个连接）
      */
     public void auditApply(UserAccount.GameUserData gameUser, List<ApplyUserData> applyList, boolean approve,
-            androidx.core.util.Consumer<Integer> onComplete) {
+            AuditCallback callback) {
         new Thread(() -> {
             int successCount = 0;
-            for (ApplyUserData apply : applyList) {
-                try {
-                    if (gameUser.gameUser != null) {
-                        gameUser.gameUser.auditApplyMember(apply.getTargetUid(), apply.getTargetIndex(), approve);
-                        successCount++;
+            String errorMessage = null;
+            try {
+                if (gameUser == null || gameUser.gameUser == null) {
+                    errorMessage = "当前账号未初始化";
+                } else {
+                    List<GameUser.AuditTarget> targets = new ArrayList<>();
+                    for (ApplyUserData apply : applyList) {
+                        String uid = apply.member != null ? apply.member.uid : null;
+                        int index = apply.getTargetIndex();
+                        android.util.Log.d(TAG, "auditApply: uid=" + uid + ", index=" + index
+                                + ", name=" + apply.getPlayerName());
+                        if (uid != null && !uid.isEmpty()) {
+                            targets.add(new GameUser.AuditTarget(uid, index));
+                        } else {
+                            android.util.Log.e(TAG, "auditApply: 跳过空uid, name=" + apply.getPlayerName());
+                        }
                     }
-                } catch (TException e) {
-                    notifyError("审核失败: " + e.getMessage());
+                    if (targets.isEmpty()) {
+                        errorMessage = "没有有效的申请数据 (uid为空)";
+                    } else {
+                        successCount = gameUser.gameUser.auditApplyMembers(targets, approve);
+                    }
                 }
+            } catch (com.example.demo.thrift.NormalException e) {
+                android.util.Log.e(TAG, "auditApply NormalException: " + e.error, e);
+                errorMessage = e.error;
+            } catch (Exception e) {
+                android.util.Log.e(TAG, "auditApply exception", e);
+                errorMessage = e.getMessage();
             }
             final int finalCount = successCount;
-            if (onComplete != null) {
-                onComplete.accept(finalCount);
+            final String finalError = errorMessage;
+            if (callback != null) {
+                callback.onComplete(finalCount, finalError);
             }
         }).start();
     }

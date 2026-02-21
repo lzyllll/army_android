@@ -52,6 +52,7 @@ public class ApplyFragment extends Fragment implements AccountManager.OnDataChan
     @Override
     public void onResume() {
         super.onResume();
+        accountManager.addListener(this);
         updateData(AccountManager.getInstance(requireContext()).getCurrentAccount());
     }
 
@@ -137,11 +138,8 @@ public class ApplyFragment extends Fragment implements AccountManager.OnDataChan
         }
         currentGameUser = gameUser;
         tvSelectedGameUser.setText(gameUser.title + " (S" + gameUser.archIndex + ")");
-        if (gameUser.cachedApplyList != null && !gameUser.cachedApplyList.isEmpty()) {
-            showApplyList(gameUser.cachedApplyList);
-        } else {
-            loadApplyList();
-        }
+        // 申请列表是实时数据，总是从服务器加载
+        loadApplyList();
     }
 
     private void loadApplyList() {
@@ -236,9 +234,14 @@ public class ApplyFragment extends Fragment implements AccountManager.OnDataChan
     }
 
     private void doAudit(List<ApplyUserData> applies, boolean approve, Runnable onComplete) {
+        if (currentGameUser == null || currentGameUser.gameUser == null) {
+            Toast.makeText(requireContext(), "请先选择账号", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         progressBar.setVisibility(View.VISIBLE);
 
-        accountManager.auditApply(currentGameUser, applies, approve, (successCount) -> {
+        accountManager.auditApply(currentGameUser, applies, approve, (successCount, errorMessage) -> {
             if (getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
@@ -249,6 +252,9 @@ public class ApplyFragment extends Fragment implements AccountManager.OnDataChan
                         if (onComplete != null) {
                             onComplete.run();
                         }
+                    } else {
+                        String msg = errorMessage != null ? "操作失败: " + errorMessage : "操作失败，请查看日志";
+                        Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
                     }
                 });
             }
