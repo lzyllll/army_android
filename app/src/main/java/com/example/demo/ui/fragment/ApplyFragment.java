@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -23,6 +22,7 @@ import com.example.demo.ui.adapter.ApplyAdapter;
 import com.example.demo.ui.model.ApplyUserData;
 import com.example.demo.ui.model.UserAccount;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.checkbox.MaterialCheckBox;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ public class ApplyFragment extends Fragment implements AccountManager.OnDataChan
     private RecyclerView recyclerView;
     private LinearLayout layoutEmpty;
     private LinearLayout layoutBatchActions;
-    private CheckBox cbSelectAll;
+    private MaterialCheckBox cbSelectAll;
     private MaterialButton btnRejectAll;
     private MaterialButton btnApproveAll;
     private ProgressBar progressBar;

@@ -47,6 +47,10 @@ public class UserAccount {
         public String lastActionLog;
         public long lastDonateTime;
 
+        // 本周累计贡献（本地跟踪）
+        public int weeklyAccumulatedContribution;
+        public long weekStartTime; // 本周起始时间戳
+
         // Caches for persistence
         public java.util.List<ParsedMember> cachedMembers;
         public com.example.demo.thrift.TasksInfo cachedTasks;

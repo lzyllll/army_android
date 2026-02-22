@@ -3,7 +3,6 @@ package com.example.demo.ui.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -18,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.demo.R;
 import com.example.demo.ui.model.UserAccount;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.checkbox.MaterialCheckBox;
 
 import java.util.HashSet;
 import java.util.List;
@@ -95,7 +95,7 @@ public class AccountAdapter extends RecyclerView.Adapter<AccountAdapter.ViewHold
                 TextView tvDatetime = archiveView.findViewById(R.id.tvDatetime);
                 // MaterialButton btnOneClick = archiveView.findViewById(R.id.btnOneClick); //
                 // Removed
-                CheckBox checkbox = archiveView.findViewById(R.id.checkbox);
+                MaterialCheckBox checkbox = archiveView.findViewById(R.id.checkbox);
                 RadioButton rbCurrent = archiveView.findViewById(R.id.rbCurrent);
 
                 tvIndex.setText("S" + gu.archIndex);

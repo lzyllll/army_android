@@ -363,11 +363,21 @@ public class GameUser {
     }
 
     /**
-     * 一键执行所有未完成的任务，并设置conDay 为100
-     * 
+     * 一键执行所有未完成的任务，并设置conDay 为1100
+     *
      * @return 执行结果摘要
      */
     public String oneClickDoTasks() throws TException, IOException {
+        return oneClickDoTasks(0);
+    }
+
+    /**
+     * 一键执行所有未完成的任务，并设置conDay 为1100，同时设置本周累计贡献
+     *
+     * @param weeklyAccumulatedContribution 本周累计贡献值
+     * @return 执行结果摘要
+     */
+    public String oneClickDoTasks(int weeklyAccumulatedContribution) throws TException, IOException {
         // 1. 获取当前任务状态
         TasksInfo info = getTasksStatus();
         Map<String, Integer> currentValues = new HashMap<>();
@@ -412,6 +422,12 @@ public class GameUser {
         me.detail.conDay = 1100;
         me.detail.loginTime = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
                 .format(new java.util.Date());
+
+        // 设置本周累计贡献
+        if (me.detail.conObj != null) {
+            me.detail.conObj.thisWeek = weeklyAccumulatedContribution;
+        }
+
         setSelfExtra(me.detail.toExtra());
         return "执行成功: " + log.toString();
     }

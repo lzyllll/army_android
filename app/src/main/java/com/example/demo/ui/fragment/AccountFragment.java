@@ -343,4 +343,5 @@ public class AccountFragment extends Fragment implements AccountManager.OnDataCh
             });
         }
     }
+
 }

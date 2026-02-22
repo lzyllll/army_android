@@ -353,22 +353,31 @@ public class AccountManager {
     public void donateAll(List<UserAccount.GameUserData> gameUsers, Runnable onComplete) {
         new Thread(() -> {
             long now = System.currentTimeMillis();
+            long thisWeekStart = getThisWeekStartTime(now);
+
             for (UserAccount.GameUserData gu : gameUsers) {
                 try {
-                    // 检查今天是否已经贡献
-                    if (gu.lastDonateTime > 0 && android.text.format.DateUtils.isToday(gu.lastDonateTime)) {
-                        continue;
+                    // 检查是否需要重置本周累计（新的一周）
+                    if (gu.weekStartTime == 0 || gu.weekStartTime < thisWeekStart) {
+                        gu.weeklyAccumulatedContribution = 0;
+                        gu.weekStartTime = thisWeekStart;
+                    }
+
+                    // 检查今天是否已经累加过贡献
+                    boolean alreadyDonatedToday = gu.lastDonateTime > 0 && android.text.format.DateUtils.isToday(gu.lastDonateTime);
+
+                    // 每天最多累加一次 1100
+                    if (!alreadyDonatedToday) {
+                        gu.weeklyAccumulatedContribution += 1100;
+                        gu.lastDonateTime = now;
                     }
 
                     if (gu.gameUser != null) {
                         // 逻辑更改为本地记录
                         // 根据用户请求使用 oneClickDoTasks
                         // 这将执行所有必要的任务，包括贡献（如果配置了）
-                        String result = gu.gameUser.oneClickDoTasks();
+                        String result = gu.gameUser.oneClickDoTasks(gu.weeklyAccumulatedContribution);
                         gu.lastActionLog = result;
-
-                        // 更新本地状态
-                        gu.lastDonateTime = now;
                     }
                 } catch (Exception e) {
                     notifyError("贡献失败 [" + gu.title + "]: " + e.getMessage());
@@ -500,7 +509,29 @@ public class AccountManager {
             try {
                 String result = "GameUser 未初始化";
                 if (gameUserData.gameUser != null) {
-                    result = gameUserData.gameUser.oneClickDoTasks();
+                    long now = System.currentTimeMillis();
+                    long thisWeekStart = getThisWeekStartTime(now);
+
+                    // 检查是否需要重置本周累计（新的一周）
+                    if (gameUserData.weekStartTime == 0 || gameUserData.weekStartTime < thisWeekStart) {
+                        gameUserData.weeklyAccumulatedContribution = 0;
+                        gameUserData.weekStartTime = thisWeekStart;
+                    }
+
+                    // 检查今天是否已经累加过贡献
+                    boolean alreadyDonatedToday = gameUserData.lastDonateTime > 0 && android.text.format.DateUtils.isToday(gameUserData.lastDonateTime);
+
+                    // 每天最多累加一次 1100
+                    if (!alreadyDonatedToday) {
+                        gameUserData.weeklyAccumulatedContribution += 1100;
+                        gameUserData.lastDonateTime = now;
+                    }
+
+                    result = gameUserData.gameUser.oneClickDoTasks(gameUserData.weeklyAccumulatedContribution);
+
+                    // 保存账号数据
+                    saveAccounts();
+
                     // 刷新数据
                     refreshGameUserData(gameUserData, null);
                 }
@@ -523,6 +554,9 @@ public class AccountManager {
      */
     public void oneClickTasksAll(List<UserAccount.GameUserData> gameUsers, Runnable onProgress, Runnable onComplete) {
         new Thread(() -> {
+            long now = System.currentTimeMillis();
+            long thisWeekStart = getThisWeekStartTime(now);
+
             for (UserAccount.GameUserData gu : gameUsers) {
                 try {
                     if (gu.gameUser != null) {
@@ -531,7 +565,22 @@ public class AccountManager {
                             new android.os.Handler(android.os.Looper.getMainLooper()).post(onProgress);
                         }
 
-                        String result = gu.gameUser.oneClickDoTasks();
+                        // 检查是否需要重置本周累计（新的一周）
+                        if (gu.weekStartTime == 0 || gu.weekStartTime < thisWeekStart) {
+                            gu.weeklyAccumulatedContribution = 0;
+                            gu.weekStartTime = thisWeekStart;
+                        }
+
+                        // 检查今天是否已经累加过贡献
+                        boolean alreadyDonatedToday = gu.lastDonateTime > 0 && android.text.format.DateUtils.isToday(gu.lastDonateTime);
+
+                        // 每天最多累加一次 1100
+                        if (!alreadyDonatedToday) {
+                            gu.weeklyAccumulatedContribution += 1100;
+                            gu.lastDonateTime = now;
+                        }
+
+                        String result = gu.gameUser.oneClickDoTasks(gu.weeklyAccumulatedContribution);
                         gu.lastActionLog = result;
 
                         // 刷新单条数据
@@ -560,6 +609,9 @@ public class AccountManager {
                 }
             }
 
+            // 保存更改
+            saveAccounts();
+
             if (onComplete != null) {
                 new android.os.Handler(android.os.Looper.getMainLooper()).post(onComplete);
             }
@@ -568,6 +620,32 @@ public class AccountManager {
 
     public void updateGameUserSelection(UserAccount account) {
         saveAccounts();
+    }
+
+    /**
+     * 获取本周起始时间（周一 00:00:00）
+     */
+    private long getThisWeekStartTime(long now) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTimeInMillis(now);
+
+        int dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK);
+        // Calendar: Sun=1, Mon=2, Tue=3, Wed=4, Thu=5, Fri=6, Sat=7
+        // 计算距离本周一过了多少天
+        int daysSinceMonday;
+        if (dayOfWeek == java.util.Calendar.SUNDAY) {
+            daysSinceMonday = 6; // 周日是上周的最后一天，距离本周一6天
+        } else {
+            daysSinceMonday = dayOfWeek - java.util.Calendar.MONDAY;
+        }
+
+        cal.add(java.util.Calendar.DAY_OF_MONTH, -daysSinceMonday);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+
+        return cal.getTimeInMillis();
     }
 
     // ==================== 持久化 ====================
@@ -591,6 +669,8 @@ public class AccountManager {
                     guObj.put("enabled", gu.enabled);
                     guObj.put("selected", gu.selected);
                     guObj.put("lastDonateTime", gu.lastDonateTime);
+                    guObj.put("weeklyAccumulatedContribution", gu.weeklyAccumulatedContribution);
+                    guObj.put("weekStartTime", gu.weekStartTime);
                     gameUsersArray.put(guObj);
                 }
                 obj.put("gameUsers", gameUsersArray);
@@ -650,6 +730,8 @@ public class AccountManager {
                             gu.enabled = guObj.optBoolean("enabled", true);
                             gu.selected = guObj.optBoolean("selected", false);
                             gu.lastDonateTime = guObj.optLong("lastDonateTime", 0);
+                            gu.weeklyAccumulatedContribution = guObj.optInt("weeklyAccumulatedContribution", 0);
+                            gu.weekStartTime = guObj.optLong("weekStartTime", 0);
                             loadGameUserCache(gu, account.uid); // 加载缓存
                             account.gameUsers.add(gu);
                         }

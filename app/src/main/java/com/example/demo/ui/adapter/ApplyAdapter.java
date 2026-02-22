@@ -5,7 +5,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.demo.R;
 import com.example.demo.ui.model.ApplyUserData;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.checkbox.MaterialCheckBox;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -67,7 +67,20 @@ public class ApplyAdapter extends RecyclerView.Adapter<ApplyAdapter.ViewHolder> 
         int index = applyList.indexOf(apply);
         if (index >= 0) {
             applyList.remove(index);
-            selectedPositions.remove(index);
+
+            // 更新选中位置：移除被删除项，并将后续位置前移
+            Set<Integer> updatedPositions = new HashSet<>();
+            for (int pos : selectedPositions) {
+                if (pos < index) {
+                    updatedPositions.add(pos);
+                } else if (pos > index) {
+                    updatedPositions.add(pos - 1);
+                }
+                // pos == index 的项被移除，不添加
+            }
+            selectedPositions.clear();
+            selectedPositions.addAll(updatedPositions);
+
             notifyItemRemoved(index);
             notifySelectionChanged();
         }
@@ -110,7 +123,10 @@ public class ApplyAdapter extends RecyclerView.Adapter<ApplyAdapter.ViewHolder> 
             holder.tvVip.setText(vipStr);
             // VIP 颜色根据等级变化
             GradientDrawable bg = new GradientDrawable();
-            bg.setCornerRadius(4f);
+            // 将 dp 转换为像素
+            float radiusDp = 4f;
+            float radiusPx = radiusDp * holder.itemView.getContext().getResources().getDisplayMetrics().density;
+            bg.setCornerRadius(radiusPx);
             try {
                 int vip = Integer.parseInt(vipStr);
                 if (vip >= 8) {
@@ -173,7 +189,7 @@ public class ApplyAdapter extends RecyclerView.Adapter<ApplyAdapter.ViewHolder> 
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        CheckBox checkbox;
+        MaterialCheckBox checkbox;
         TextView tvPlayerName;
         TextView tvVip;
         TextView tvLevel;
